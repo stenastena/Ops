@@ -1,5 +1,5 @@
-#Connect-AzAccount
-Select-AzSubscription -SubscriptionID f5b5d7b3-27e6-47ba-83c1-58824d3eb42b
+Connect-AzAccount
+Select-AzSubscription -SubscriptionID YYYYYYYYYYYYYYYYYYYYYYYYYYYYY
 $rgName = 'rgVmMigrated' # Resource Group Name
 
 #Import VMs for renaming
