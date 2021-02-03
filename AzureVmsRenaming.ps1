@@ -1,6 +1,6 @@
 Connect-AzAccount
 Select-AzSubscription -SubscriptionID YYYYYYYYYYYYYYYYYYYYYYYYYYYYY
-$rgName = 'rgVmMigrated' # Resource Group Name
+$rgName = 'NNNNNNNNN' # Resource Group Name
 
 #Import VMs for renaming
 $VMList = Import-Csv -Path .\VMs.csv
