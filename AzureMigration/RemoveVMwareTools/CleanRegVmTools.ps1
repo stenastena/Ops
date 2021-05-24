@@ -4,18 +4,9 @@
 
 function Search-Registry { 
 <# 
-.SYNOPSIS 
-Searches registry key names, value names, and value data (limited). 
-
-.DESCRIPTION 
 This function can search registry key names, value names, and value data (in a limited fashion). It outputs custom objects that contain the key and the first match type (KeyName, ValueName, or ValueData). 
-
-.EXAMPLE 
 Search-Registry -Path HKLM:\SYSTEM\CurrentControlSet\Services\* -SearchRegex "svchost" -ValueData 
-
-.EXAMPLE 
 Search-Registry -Path HKLM:\SOFTWARE\Microsoft -Recurse -ValueNameRegex "ValueName1|ValueName2" -ValueDataRegex "ValueData" -KeyNameRegex "KeyNameToFind1|KeyNameToFind2" 
-
 #> 
     [CmdletBinding()] 
     param( 
