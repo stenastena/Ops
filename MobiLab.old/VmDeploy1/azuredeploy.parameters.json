@@ -1,0 +1,23 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": 
+  {
+    "adminUsername": 
+    {
+      "value": "superadmin"
+    },
+    "dnsLabelPrefix": 
+    {
+      "value": "mydns"
+    },
+    "sshKeyData": 
+    {
+      "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDam7kPa49PevT2XBBwj74Umc4Y07vg/oH+LkfA4oSHwEdt5ipOSqgrvjTzWzDXqwKtiuU10AkR+U+uBmBbZgmKuND/CrLbcfgsstZoKJvP6Rtqvw+KvPpR5Op2Xyswox2n6/rEqE73JkmYKg6aEce9gF1Z5izd0bJzCUixCFEqZl5qzkkoP3/OE0cxphkW2IB+0Nip85lxMDjz2VnbLxhMpZPPa11nAPCJQUhLUqV2DwDiIXcRCRKk+OMStpQMxEqi4OKWVDzuzq1y7xOGtMOxT4OIZf3V8pe53qGNgoSi7H6+ag5D0Q+EBxcEZGY8zzeWy5MUKJQI5eo2GdOicfNB os@MSK18-N0057"
+    },
+    "vnetname": 
+    {
+      "value": "VnetAKS"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": 
+    {
+        "virtualMachineName": 
+        {
+            "value": "VmWin"
+        },
+        "adminUsername": 
+        {
+            "value": "superadmin"
+        },
+        "adminPassword": 
+        {
+            "reference": 
+            {
+                "keyVault": 
+                {
+                "id": "/subscriptions/f5b5d7b3-27e6-47ba-83c1-58824d3eb42b/resourceGroups/rgVmMigrated/providers/Microsoft.KeyVault/vaults/KeyVault149"
+                },
+                "secretName": "PassForVMs"
+            }
+        },
+        "NumberOfVMs": 
+        {
+            "value": 3
+        },
+        "virtualMachineSize": 
+        {
+            "value": "Standard_B2s" 
+        },
+        "resourceTags": 
+        {
+            "value": 
+                {
+                 "Stage": "Test",
+                 "Project": "MobileLab"
+                }
+        }
+    }
+}
