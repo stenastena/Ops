@@ -1,5 +1,3 @@
-.gitignore.bak
-.gitignore.old
-.\AzureMigration\RemoveVMwareTools\Tmp\*
-MobiLab.old\*
-Webinar Azure basics\*
+gitignore.bak
+gitignore.old
+# \AzureMigration\RemoveVMwareTools\Tmp\
