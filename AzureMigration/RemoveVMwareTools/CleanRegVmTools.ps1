@@ -126,8 +126,8 @@ catch {
 
 
 try {
-    Write-Host "3. Seach key in HKEY_LOCAL_MACHINE\Software\VMware" -ForegroundColor Green
-    $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\VMware"  -KeyNameRegex "VMWare tools" -ErrorAction Stop
+    Write-Host "3. Seach key in HKEY_LOCAL_MACHINE\Software\VMware, Inc." -ForegroundColor Green
+    $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\VMware, Inc."  -KeyNameRegex "VMWare tools" -ErrorAction Stop
     Write-Host "Found:"
     Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
     foreach ($EachKey in $FullKeyPath) {
