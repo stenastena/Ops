@@ -1,4 +1,4 @@
-﻿# If script doesn't work due the Execution policy restrictions, perform these two commands from the Powshershell console
+﻿# If this script doesn't work due the Execution policy restrictions, perform these two commands from the Powshershell console
 #Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
 #Unblock-File -Path .\CleanRegVmTools.ps1
 
@@ -91,34 +91,56 @@ Search-Registry -Path HKLM:\SOFTWARE\Microsoft -Recurse -ValueNameRegex "ValueNa
     } 
 } 
 
-
-Write-Host "1. Seach property in HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall" -ForegroundColor Green
-$FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall"  -ValueDataRegex "VMWare tools"
-Write-Host "Found:"
-Write-Output $FullKeyPath | Get-Item
-foreach ($EachKey in $FullKeyPath) {
-    Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
-    Write-Output $EachKey | Remove-Item
+try {
+    Write-Host "1. Seach property in HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall" -ForegroundColor Green
+    $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall"  -ValueDataRegex "VMWare tools" -ErrorAction Stop
+    Write-Host "Found:"
+    Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
+    foreach ($EachKey in $FullKeyPath) {
+        Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
+        Write-Output $EachKey | Remove-Item
+    }
+    Write-Output ""     
 }
-
-Write-Host "2. Seach property in HKEY_LOCAL_MACHINE\Software\Classes\Installer\Products" -ForegroundColor Green
-$FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\Classes\Installer\Products" -ValueDataRegex "VMWare tools"
-Write-Host "Found:"
-Write-Output $FullKeyPath | Get-Item
-foreach ($EachKey in $FullKeyPath) {
-    Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
-    Write-Output $EachKey | Remove-Item
+catch {
+    Write-Host "Probably, nothing found" -ForegroundColor Blue    
+    Write-Output ""
 }
 
 
-Write-Host "3. Seach key in HKEY_LOCAL_MACHINE\Software\VMware" -ForegroundColor Green
-$FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\VMware"  -KeyNameRegex "VMWare tools"
-Write-Host "Found:"
-Write-Output $FullKeyPath | Get-Item
-foreach ($EachKey in $FullKeyPath) {
-    Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
-    Write-Output $EachKey | Remove-Item
+try {
+    Write-Host "2. Seach property in HKEY_LOCAL_MACHINE\Software\Classes\Installer\Products" -ForegroundColor Green
+    $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\Classes\Installer\Products" -ValueDataRegex "VMWare tools" -ErrorAction Stop
+    Write-Host "Found:"
+    Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
+    foreach ($EachKey in $FullKeyPath) {
+        Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
+        Write-Output $EachKey | Remove-Item
+    }    
+    Write-Output ""
 }
+catch {
+   Write-Host "Probably, nothing found" -ForegroundColor Blue 
+   Write-Output ""
+}
+
+
+try {
+    Write-Host "3. Seach key in HKEY_LOCAL_MACHINE\Software\VMware" -ForegroundColor Green
+    $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\VMware"  -KeyNameRegex "VMWare tools" -ErrorAction Stop
+    Write-Host "Found:"
+    Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
+    foreach ($EachKey in $FullKeyPath) {
+        Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
+        Write-Output $EachKey | Remove-Item
+    }    
+    Write-Output ""
+}
+catch {
+    Write-Host "Probably, nothing found" -ForegroundColor Blue
+    Write-Output ""
+}
+
 
 <#
 # That is excessive requirement to remove the keys on this path, because that is mirror of previouse keys
