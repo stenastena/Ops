@@ -20,5 +20,27 @@ Write-Output "---------------"
 
 
 # Powershell 5.0 and above
-$app = Get-Package |  Where-Object {$_.Name -like "*zip*" } | Select-Object Name 
-Write-Output $app.Name
+#$app = Get-Package |  Where-Object {$_.Name -like "*zip*" } | Select-Object Name 
+#Write-Output $app.Name
+
+#$app = Get-Package |  Where-Object {$_.Name -like "*zip*" } | Select-Object Name 
+#Write-Output $app.Name
+
+#Uninstall VMtools from Win Server 2012
+$regpath = "HKLM:\Software\Microsoft\Windows\CurrentVersion\uninstall"
+Get-childItem $regpath | %  {
+$keypath = $_.pschildname
+$key = Get-Itemproperty $regpath\$keypath
+if ($key.DisplayName -match "VMware Tools") {
+$VMwareToolsGUID = $keypath
+}
+Write-Output $VMwareToolsGUID
+}
+#MsiExec.exe /x $VMwareToolsGUID  /qn /norestart
+
+#error code of last windows app
+Write-Output "Tha last app was finished with this code: $?" 
+
+#error code of last Pwershell commandlet
+Write-Output "Tha last Pwershell commandlet was finished with this code: $LastExitCode" 
+
