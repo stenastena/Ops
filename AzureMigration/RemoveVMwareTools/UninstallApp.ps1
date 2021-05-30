@@ -44,3 +44,9 @@ Write-Output "Tha last app was finished with this code: $?"
 #error code of last Pwershell commandlet
 Write-Output "Tha last Pwershell commandlet was finished with this code: $LastExitCode" 
 
+
+#Uninstall VMtools from Win Server 2016
+$regpath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+$regkey = $regpath | Get-ChildItem | Get-ItemProperty | Where-Object { 'VMware Tools' -contains $_.DisplayName }
+msiexec.exe /x $regkey.PSChildName /passive /norestart
+shutdown -s -t 120 -f
