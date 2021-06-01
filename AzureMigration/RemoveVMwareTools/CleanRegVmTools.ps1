@@ -2,6 +2,9 @@
 #Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
 #Unblock-File -Path .\CleanRegVmTools.ps1
 
+# The set of registry keys for this script has got from here:
+# https://kb.vmware.com/s/article/1001354?sliceId=1
+
 function Search-Registry { 
     <# 
     This function can search registry key names, value names, and value data (in a limited fashion). It outputs custom objects that contain the key and the first match type (KeyName, ValueName, or ValueData). 
@@ -64,7 +67,6 @@ function Search-Registry {
                         {  
                             if ($Key.PSChildName -match $KeyNameRegex) 
                             {  
-                                #Write-host $Key
                                 Return $Key
                             }  
                         } 
@@ -73,7 +75,6 @@ function Search-Registry {
                         {  
                             if ($Key.GetValueNames() -match $ValueNameRegex) 
                             {  
-                                #Write-host $Key
                                 Return $Key
                             }  
                         } 
@@ -82,7 +83,6 @@ function Search-Registry {
                         {  
                             if (($Key.GetValueNames() | % { $Key.GetValue($_) }) -match $ValueDataRegex) 
                             {  
-                                #Write-host $Key
                                 Return $Key
                             } 
                         } 
@@ -91,146 +91,178 @@ function Search-Registry {
         } 
     } 
     
-    
-    # -------- cleaning Windows registry ------------------
-    try {
-        Write-Host "1. Seach property in HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall" -ForegroundColor Green
-        $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall"  -ValueDataRegex "VMWare tools" -ErrorAction Stop
-        Write-Host "Found:"
-        Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
-        foreach ($EachKey in $FullKeyPath) {
-            Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
-            Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false 
-        }
-        Write-Output ""     
+# =========== First of all, we try to remove Vmware Tools with standard tools and with different ways depending on the operation system
+
+if ((Get-WmiObject -class Win32_OperatingSystem).Caption -Match "2012"  ) {
+    Write-Host "Windows Server 2012"    
+    #Uninstall VMtools from Win Server 2012
+    $regpath = "HKLM:\Software\Microsoft\Windows\CurrentVersion\uninstall"
+    Get-childItem $regpath | %  {
+    $keypath = $_.pschildname
+    $key = Get-Itemproperty $regpath\$keypath
+    if ($key.DisplayName -match "VMware Tools") {
+    $VMwareToolsGUID = $keypath
     }
-    catch {
-        Write-Host "Probably, nothing found" -ForegroundColor DarkYellow    
-        Write-Output ""
+    #Write-Output $VMwareToolsGUID
     }
+    #MsiExec.exe /x $VMwareToolsGUID  /qn /norestart
+    #Wait-Job -Any
+}
+        
+elseif ( ((Get-WmiObject -class Win32_OperatingSystem).Caption -Match "2016") -or `
+    ((Get-WmiObject -class Win32_OperatingSystem).Caption -Match "Windows 10") -or `
+    ((Get-WmiObject -class Win32_OperatingSystem).Caption -Match "2019")  ) { 
+    Write-Host "Win 2016 or 2019 or Win 10"
+    #Uninstall VMtools from Win Server 2016
+    $regpath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+    $regkey = $regpath | Get-ChildItem | Get-ItemProperty | Where-Object { 'VMware Tools' -contains $_.DisplayName }
+    msiexec.exe /x $regkey.PSChildName /passive /norestart
+    #Wait-Job -Any
+    Start-Job -Name RemoveVMtoolsByStandardTool -ScriptBlock {$(msiexec.exe /x $regkey.PSChildName  /passive /norestart)} | Wait-Job
+}
+else {
+    Write-Host "There is another operation system:"
+    (Get-WmiObject -class Win32_OperatingSystem).Caption | Write-Host 
+}
     
-    
-    try {
-        Write-Host "2. Seach property in HKEY_LOCAL_MACHINE\Software\Classes\Installer\Products" -ForegroundColor Green
-        $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\Classes\Installer\Products" -ValueDataRegex "VMWare tools" -ErrorAction Stop
-        Write-Host "Found:"
-        Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
-        foreach ($EachKey in $FullKeyPath) {
-            Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
-            Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false 
-        }    
-        Write-Output ""
-    }
-    catch {
-       Write-Host "Probably, nothing found" -ForegroundColor DarkYellow 
-       Write-Output ""
-    }
-    
-    
-    try {
-        Write-Host "3. Seach key in HKEY_LOCAL_MACHINE\Software\VMware, Inc." -ForegroundColor Green
-        $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\VMware, Inc."  -KeyNameRegex "VMWare tools" -ErrorAction Stop
-        Write-Host "Found:"
-        Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
-        foreach ($EachKey in $FullKeyPath) {
-            Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
-            Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false 
-        }    
-        Write-Output ""
-    }
-    catch {
-        Write-Host "Probably, nothing found" -ForegroundColor DarkYellow
-        Write-Output ""
-    }
-    
-    
-    <#
-    # That is excessive requirement to remove the keys on this path, because that is mirror of previouse keys
-    Write-Host "4. Seach property in HKEY_CLASSES_ROOT\Installer\Products" -ForegroundColor Green
-    $FullKeyPath = Search-Registry -Path "Registry::HKEY_CLASSES_ROOT\Installer\Products"   -ValueDataRegex "VMWare tools"
+
+# =========== Often standard tools don't remove VMware Tools. Therefore, we are cleaning out the Windows registry ===========
+try {
+    Write-Host "1. Seach property in HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall" -ForegroundColor Green
+    $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall"  -ValueDataRegex "VMWare tools" -ErrorAction Stop
     Write-Host "Found:"
-    Write-Output $FullKeyPath | Get-Item
-    #Write-Host "Delete..." -ForegroundColor Yellow
-    #Write-Output $FullKeyPath | Remove-Item
-    #>
-    
-    
-    try {
-        Write-Host "4. Seach key in HKEY_LOCAL_MACHINE\Software\VMware Drivers" -ForegroundColor Green
-        $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\VMware Drivers"  -KeyNameRegex "VMWare tools" -ErrorAction Stop
-        Write-Host "Found:"
-        Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
-        foreach ($EachKey in $FullKeyPath) {
-            Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
-            Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false
-        }    
-        Write-Output ""
+    Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
+    foreach ($EachKey in $FullKeyPath) {
+        Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
+        Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false 
     }
-    catch {
-        Write-Host "Probably, nothing found" -ForegroundColor DarkYellow
-        Write-Output ""
-    }
+    Write-Output ""     
+}
+catch {
+    Write-Host "Probably, nothing found" -ForegroundColor DarkYellow    
+    Write-Output ""
+}
+
+
+try {
+    Write-Host "2. Seach property in HKEY_LOCAL_MACHINE\Software\Classes\Installer\Products" -ForegroundColor Green
+    $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\Classes\Installer\Products" -ValueDataRegex "VMWare tools" -ErrorAction Stop
+    Write-Host "Found:"
+    Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
+    foreach ($EachKey in $FullKeyPath) {
+        Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
+        Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false 
+    }    
+    Write-Output ""
+}
+catch {
+   Write-Host "Probably, nothing found" -ForegroundColor DarkYellow 
+   Write-Output ""
+}
+
+try {
+    Write-Host "2. Seach property in HKEY_LOCAL_MACHINE\Software\Classes\Installer\Features" -ForegroundColor Green
+    $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\Classes\Installer\Features" -ValueDataRegex "VMWare tools" -ErrorAction Stop
+    Write-Host "Found:"
+    Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
+    foreach ($EachKey in $FullKeyPath) {
+        Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
+        Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false 
+    }    
+    Write-Output ""
+}
+catch {
+   Write-Host "Probably, nothing found" -ForegroundColor DarkYellow 
+   Write-Output ""
+}
+
+try {
+    Write-Host "3. Seach key in HKEY_LOCAL_MACHINE\Software\VMware, Inc." -ForegroundColor Green
+    $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\VMware, Inc."  -KeyNameRegex "VMWare tools" -ErrorAction Stop
+    Write-Host "Found:"
+    Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
+    foreach ($EachKey in $FullKeyPath) {
+        Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
+        Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false 
+    }    
+    Write-Output ""
+}
+catch {
+    Write-Host "Probably, nothing found" -ForegroundColor DarkYellow
+    Write-Output ""
+}
+
+try {
+    Write-Host "4. Seach key in HKEY_LOCAL_MACHINE\Software\VMware Drivers" -ForegroundColor Green
+    $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\VMware Drivers"  -KeyNameRegex "VMWare tools" -ErrorAction Stop
+    Write-Host "Found:"
+    Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
+    foreach ($EachKey in $FullKeyPath) {
+        Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
+        Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false
+    }    
+    Write-Output ""
+}
+catch {
+    Write-Host "Probably, nothing found" -ForegroundColor DarkYellow
+    Write-Output ""
+}
+
+try {
+    Write-Host "5. Seach key in HKEY_LOCAL_MACHINE\Software\VMware VGAuth" -ForegroundColor Green
+    $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\VMware VGAuth"  -KeyNameRegex "VMWare tools" -ErrorAction Stop
+    Write-Host "Found:"
+    Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
+    foreach ($EachKey in $FullKeyPath) {
+        Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
+        Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false 
+    }    
+    Write-Output ""
+}
+catch {
+    Write-Host "Probably, nothing found" -ForegroundColor DarkYellow
+    Write-Output ""
+}
+
+try {
+    Write-Host "6. Seach key in HKEY_LOCAL_MACHINE\Software\VMwareHostOpen" -ForegroundColor Green
+    $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\VMwareHostOpen"  -KeyNameRegex "VMWare tools" -ErrorAction Stop
+    Write-Host "Found:"
+    Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
+    foreach ($EachKey in $FullKeyPath) {
+        Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
+        Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false 
+    }    
+    Write-Output ""
+}
+catch {
+    Write-Host "Probably, nothing found" -ForegroundColor DarkYellow
+    Write-Output ""
+} 
+
     
-    try {
-        Write-Host "5. Seach key in HKEY_LOCAL_MACHINE\Software\VMware VGAuth" -ForegroundColor Green
-        $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\VMware VGAuth"  -KeyNameRegex "VMWare tools" -ErrorAction Stop
-        Write-Host "Found:"
-        Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
-        foreach ($EachKey in $FullKeyPath) {
-            Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
-            Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false 
-        }    
-        Write-Output ""
-    }
-    catch {
-        Write-Host "Probably, nothing found" -ForegroundColor DarkYellow
-        Write-Output ""
-    }
-    
-    try {
-        Write-Host "6. Seach key in HKEY_LOCAL_MACHINE\Software\VMwareHostOpen" -ForegroundColor Green
-        $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\VMwareHostOpen"  -KeyNameRegex "VMWare tools" -ErrorAction Stop
-        Write-Host "Found:"
-        Write-Output $FullKeyPath | Get-Item -ErrorAction Stop
-        foreach ($EachKey in $FullKeyPath) {
-            Write-Host "Removing this key...$EachKey" -ForegroundColor Yellow
-            Write-Output $EachKey | Remove-Item -Force -Recurse -Confirm:$false 
-        }    
-        Write-Output ""
-    }
-    catch {
-        Write-Host "Probably, nothing found" -ForegroundColor DarkYellow
-        Write-Output ""
-    }
-    
-    # ---------------- deleting service VMware Tools
-    #sc delete VMtools 
-    #Remove-Service -Name VMtools
-    
+    # =========== deleting service VMware Tools ===========
     cmd.exe /c "sc delete vmtools"
     cmd.exe /c "sc delete VGAuthService"
-    
-    #VMware Snapshot Provider
+    # Also delete VMware Snapshot Provider
     #C:\Windows\system32\dllhost.exe /Processid:{9213D05C-8856-4518-BAA0-B04BA6C797A7}
-    
     cmd.exe /c "sc delete vmvss"
-    
-    #VMware SVGA Helper Service
+    #Also delete VMware SVGA Helper Service
     #C:\Windows\system32\vm3dservice.exe
-    
     cmd.exe /c "sc delete vm3dservice"
+
+    # =========== Stop current VMware Tools processes ===========
+    Stop-Process -Name "vmtoolsd" -Confirm:$false -Force
+    Stop-Process -Name "VGAuthService" -Confirm:$false -Force
     
-    
-    
-    # =========== deleteing folder with VMware Tools ---------------
-    #Get-ChildItem "C:\Program Files\VMware\VMware Tools\" -Recurse | Remove-Item -Force -Confirm:$false 
+    # =========== deleteing folder with VMware Tools ===========
     try {
-    Write-Host "Deleteng C:\Program Files\VMware\VMware Tools..."
-    Remove-Item "C:\Program Files\VMware\VMware Tools" -Force -Recurse -Confirm:$false -ErrorAction Stop
+    Write-Host "Deleteng C:\Program Files\VMware\VMware Tools"
+    Write-Host "Waiting about 5 sec..."
+    Start-Sleep -Seconds 5
+    Remove-Item "$Env:Programfiles\VMware\VMware Tools" -Force -Recurse -Confirm:$false -ErrorAction Stop
     }
     catch {
     Write-Host "Probably, can't delete some files, because their are busy. It could be done after restarting server." -ForegroundColor DarkYellow
     }
-    
-    
     
