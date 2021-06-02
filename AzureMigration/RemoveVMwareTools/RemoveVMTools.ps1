@@ -1,6 +1,6 @@
 ﻿# If this script doesn't work due the Execution policy restrictions, perform these two commands from the Powshershell console
 #Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
-#Unblock-File -Path .\CleanRegVmTools.ps1
+#Unblock-File -Path .\RemoveVMTools.ps1
 
 function Search-Registry { 
     <# 
