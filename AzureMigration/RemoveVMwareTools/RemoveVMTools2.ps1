@@ -2,12 +2,10 @@
 #Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
 #Unblock-File -Path .\CleanRegVmTools.ps1
 
-# The set of registry keys for this script has got from here:
-# https://kb.vmware.com/s/article/1001354?sliceId=1
-
 function Search-Registry { 
     <# 
-    This function can search registry key names, value names, and value data (in a limited fashion). It outputs custom objects that contain the key and the first match type (KeyName, ValueName, or ValueData). 
+    This function can search registry key names, value names, and value data (in a limited fashion). 
+    It outputs custom objects that contain the key and the first match type (KeyName, ValueName, or ValueData). 
     Search-Registry -Path HKLM:\SYSTEM\CurrentControlSet\Services\* -SearchRegex "svchost" -ValueData 
     Search-Registry -Path HKLM:\SOFTWARE\Microsoft -Recurse -ValueNameRegex "ValueName1|ValueName2" -ValueDataRegex "ValueData" -KeyNameRegex "KeyNameToFind1|KeyNameToFind2" 
     #> 
@@ -127,7 +125,7 @@ else {
 
 #>
 
-# =========== Often standard tools don't remove VMware Tools. Therefore, we are cleaning out the Windows registry ===========
+# =========== Often, standard tools don't remove VMware Tools. Therefore, we are cleaning out the Windows registry and then remove VMware services  ===========
 try {
     Write-Host "1. Seach property in HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall" -ForegroundColor Green
     $FullKeyPath = Search-Registry -Path "Registry::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall"  -ValueDataRegex "VMWare tools" -ErrorAction Stop
