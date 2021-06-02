@@ -266,10 +266,3 @@ catch {
     catch {
     Write-Host "Probably, can't delete some files, because their are busy. It could be done after restarting server." -ForegroundColor DarkYellow
     }
-<<<<<<< HEAD:AzureMigration/RemoveVMwareTools/CleanRegVmTools.ps1
-    
-=======
-    
-    
-    
->>>>>>> da3f3380e6662d3ffda140b1d140b041ce72e939:AzureMigration/RemoveVMwareTools/RemoveVMTools.ps1
