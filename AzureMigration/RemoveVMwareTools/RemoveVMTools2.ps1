@@ -92,7 +92,7 @@ function Search-Registry {
     } 
     
 # =========== First of all, we try to remove Vmware Tools with standard tools and with different ways depending on the operation system
-
+<#
 if ((Get-WmiObject -class Win32_OperatingSystem).Caption -Match "2012"  ) {
     Write-Host "Windows Server 2012"    
     #Uninstall VMtools from Win Server 2012
@@ -124,7 +124,8 @@ else {
     Write-Host "There is another operation system:"
     (Get-WmiObject -class Win32_OperatingSystem).Caption | Write-Host 
 }
-    
+
+#>
 
 # =========== Often standard tools don't remove VMware Tools. Therefore, we are cleaning out the Windows registry ===========
 try {
