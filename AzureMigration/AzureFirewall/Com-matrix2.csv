@@ -1,0 +1,11 @@
+Time slot,Source server name,Source IP,Source application,Source process,Destination server name,Destination IP,Destination application,Destination process,Destination port
+5/22/2021 12:00-18:00,S_SHG-ESS-TSVCtrl,172.16.12.223,Betriebssystem Microsoft�� Windo,svchost.exe,P_sg-ess-sbr01,172.16.12.10,Betriebssystem Microsoft�� Windo,svchost.exe,135
+5/22/2021 12:00-18:00,,10.64.35.36,,,P_sg-ess-sbr01,172.16.12.10,Betriebssystem Microsoft�� Windo,tssdis.exe,49321
+5/22/2021 12:00-18:00,,10.64.44.6,,,P_sg-ess-sbr01,172.16.12.10,Betriebssystem Microsoft�� Windo,tssdis.exe,49321
+5/22/2021 12:00-18:00,,10.64.44.7,,,P_sg-ess-sbr01,172.16.12.10,Betriebssystem Microsoft�� Windo,tssdis.exe,49321
+5/22/2021 12:00-18:00,,10.64.44.8,,,P_sg-ess-sbr01,172.16.12.10,Betriebssystem Microsoft�� Windo,tssdis.exe,49321
+5/22/2021 12:00-18:00,,10.64.44.9,,,P_sg-ess-sbr01,172.16.12.10,Betriebssystem Microsoft�� Windo,tssdis.exe,49321
+5/22/2021 12:00-18:00,P_shg-ess-tsvcog0,172.16.12.50,Microsoft�� Windows�� Operatin,svchost.exe,P_sg-ess-sbr01,172.16.12.10,Betriebssystem Microsoft�� Windo,tssdis.exe,49321
+5/22/2021 12:00-18:00,,172.16.12.51,,,P_sg-ess-sbr01,172.16.12.10,Betriebssystem Microsoft�� Windo,tssdis.exe,49321
+5/22/2021 12:00-18:00,,172.16.12.52,,,P_sg-ess-sbr01,172.16.12.10,Betriebssystem Microsoft�� Windo,tssdis.exe,49321
+5/22/2021 12:00-18:00,,172.16.12.53,,,P_sg-ess-sbr01,172.16.12.10,Betriebssystem Microsoft�� Windo,tssdis.exe,49321
