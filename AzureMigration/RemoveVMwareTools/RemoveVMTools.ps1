@@ -89,42 +89,6 @@ function Search-Registry {
         } 
     } 
     
-# =========== First of all, we try to remove Vmware Tools with standard tools and with different ways depending on the operation system
-<#
-if ((Get-WmiObject -class Win32_OperatingSystem).Caption -Match "2012"  ) {
-    Write-Host "Windows Server 2012"    
-    #Uninstall VMtools from Win Server 2012
-    $regpath = "HKLM:\Software\Microsoft\Windows\CurrentVersion\uninstall"
-    Get-childItem $regpath | %  {
-    $keypath = $_.pschildname
-    $key = Get-Itemproperty $regpath\$keypath
-    if ($key.DisplayName -match "VMware Tools") {
-    $VMwareToolsGUID = $keypath
-    }
-    #Write-Output $VMwareToolsGUID
-    }
-    #MsiExec.exe /x $VMwareToolsGUID  /qn /norestart
-    #Wait-Job -Any
-}
-        
-elseif ( ((Get-WmiObject -class Win32_OperatingSystem).Caption -Match "2016") -or `
-    ((Get-WmiObject -class Win32_OperatingSystem).Caption -Match "Windows 10") -or `
-    ((Get-WmiObject -class Win32_OperatingSystem).Caption -Match "2019")  ) { 
-    Write-Host "Win 2016 or 2019 or Win 10"
-    #Uninstall VMtools from Win Server 2016
-    $regpath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
-    $regkey = $regpath | Get-ChildItem | Get-ItemProperty | Where-Object { 'VMware Tools' -contains $_.DisplayName }
-    msiexec.exe /x $regkey.PSChildName /passive /norestart
-    #Wait-Job -Any
-    Start-Job -Name RemoveVMtoolsByStandardTool -ScriptBlock {$(msiexec.exe /x $regkey.PSChildName  /passive /norestart)} | Wait-Job
-}
-else {
-    Write-Host "There is another operation system:"
-    (Get-WmiObject -class Win32_OperatingSystem).Caption | Write-Host 
-}
-
-#>
-
 # =========== Often, standard tools don't remove VMware Tools. Therefore, we are cleaning out the Windows registry and then remove VMware services  ===========
 try {
     Write-Host "1. Seach property in HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall" -ForegroundColor Green
@@ -239,28 +203,37 @@ catch {
     Write-Output ""
 } 
 
-    
-    # =========== deleting service VMware Tools ===========
+   
+# =========== deleting service VMware Tools ===========
     cmd.exe /c "sc delete vmtools"
     cmd.exe /c "sc delete VGAuthService"
-    # Also delete VMware Snapshot Provider
-    #C:\Windows\system32\dllhost.exe /Processid:{9213D05C-8856-4518-BAA0-B04BA6C797A7}
     cmd.exe /c "sc delete vmvss"
-    #Also delete VMware SVGA Helper Service
-    #C:\Windows\system32\vm3dservice.exe
+#Also delete VMware SVGA Helper Service
     cmd.exe /c "sc delete vm3dservice"
-
-    # =========== Stop current VMware Tools processes ===========
-    Stop-Process -Name "vmtoolsd" -Confirm:$false -Force
-    Stop-Process -Name "VGAuthService" -Confirm:$false -Force
-    
-    # =========== deleteing folder with VMware Tools ===========
+ 
+ 
+# =========== Stop current VMware Tools processes ===========
+try {
+    Stop-Process -Name "vmtoolsd" -Confirm:$false -Force -ErrorAction Stop
+}
+    catch {
+    Write-Host "Probably, vmtoolsd service is absent" -ForegroundColor DarkYellow
+    Write-Output ""
+}
+try {
+    Stop-Process -Name "VGAuthService" -Confirm:$false -Force -ErrorAction Stop
+}
+    catch {
+    Write-Host "Probably, VGAuthService service is absent" -ForegroundColor DarkYellow
+    Write-Output ""
+}    
+# =========== deleteing folder with VMware Tools ===========
     try {
     Write-Host "Deleteng C:\Program Files\VMware\VMware Tools"
-    Write-Host "Waiting about 5 sec..."
-    Start-Sleep -Seconds 5
+    Write-Host "Waiting about 7 sec..."
+    Start-Sleep -Seconds 7
     Remove-Item "$Env:Programfiles\VMware\VMware Tools" -Force -Recurse -Confirm:$false -ErrorAction Stop
     }
     catch {
-    Write-Host "Probably, can't delete some files, because their are busy. It could be done after restarting server." -ForegroundColor DarkYellow
+    Write-Host "Probably, can't delete some files, because their are busy or have already deleted. It could be done after restarting server." -ForegroundColor DarkYellow
     }
